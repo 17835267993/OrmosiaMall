@@ -1,0 +1,30 @@
+import axios from 'axios'
+
+export function request(config, success, failure) {
+  // 1.创建实例
+  const instance = axios.create({
+    // baseURL: 'http://123.207.32.32:8000',
+    baseURL: "http://152.136.185.210:8000/api/w6",
+    // baseURL: 'http://localhost:3000/',
+    timeout: 1000000
+  })
+
+  // 2.axios的拦截器
+  // 2.1 请求拦截
+  instance.interceptors.request.use(config => {
+    return config
+  }),err => {
+  //   console.log(err);
+  }
+
+  // 2.2 响应拦截
+  instance.interceptors.response.use(res => {
+  //   console.log(res);
+      return res.data
+  }), err => {
+  //   console.log(err);
+  }
+
+  // 3.发送真正的网络请求 instance本身就是一个Promise
+  return instance(config)
+}
