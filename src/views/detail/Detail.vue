@@ -3,6 +3,7 @@
     <detail-nav-bar class="detail-bar" @titleClick="titleClick" ref="nav"/>
     <scroll class="content"  ref="scroll" 
             :probe-type="3" @scroll="contentScroll">
+      <!-- 属性:topImages 传入值:top-images -->
       <detail-swiper :top-images="topImages"/>
       <detail-base-info :goods="goods"/>
       <detail-shop-info :shop="shop"/>
@@ -11,6 +12,8 @@
       <detail-comment-info ref="comment" :comment-info="commentInfo"/>
       <goods-list ref="recommend" :goods="recommends"/>
     </scroll>
+    <detail-bottom-bar @addToCart="addToCart" />
+    <back-top @click.native="backClick" v-show="isShowBackTop"/>
   </div>
 </template>
 
@@ -22,13 +25,17 @@ import DetailShopInfo from './childComps/DetailShopInfo'
 import DetailGoodsInfo from './childComps/DetailGoodsInfo'
 import DetailParamInfo from './childComps/DetailParamInfo'
 import DetailCommentInfo from './childComps/DetailCommentInfo'
+import DetailBottomBar from './childComps/DetailBottomBar'
 
 import Scroll from 'components/common/scroll/Scroll'
+// import Toast from 'components/common/toast/Toast'
 import GoodsList from 'components/content/goods/GoodsList'
 
 import {getDetail, Goods, Shop, GoodsParam, getRecommend} from 'network/detail'
-import {debouce} from 'common/utils'
-import {itemListenerMixin} from 'common/mixin'
+import {debounce} from 'common/utils'
+import {itemListenerMixin, backTopMixin} from 'common/mixin'
+
+import { mapAction, mapActions } from 'vuex'
 
 export default {
   name: "Detail",
@@ -40,10 +47,12 @@ export default {
     DetailGoodsInfo,
     DetailParamInfo,
     DetailCommentInfo,
+    DetailBottomBar,
     Scroll,
+    // Toast,
     GoodsList
   },
-  mixins: [itemListenerMixin],
+  mixins: [itemListenerMixin, backTopMixin],
   data() {
     return {
       iid: null,
@@ -56,7 +65,8 @@ export default {
       recommends: [],
       themeTopYs: [],
       getThemeTopY: null,
-      currentIndex: 0
+      currentIndex: 0,
+      
     }
   },
   created() {
@@ -104,7 +114,7 @@ export default {
       this.recommends = res.data.list
     })
     // 4.给getThemeTopY赋值
-    this.getThemeTopY = debouce(() => {
+    this.getThemeTopY = debounce(() => {
       this.themeTopYs = []
       this.themeTopYs.push(0);
       this.themeTopYs.push(this.$refs.params.$el.offsetTop)
@@ -130,6 +140,7 @@ export default {
     this.$bus.$off('itemImgLoad', this.itemImgListener)
   },
   methods: {
+    ...mapActions(['addCart']),
     imageLoad() {
       this.$refs.scroll.refresh()
     },
@@ -145,19 +156,44 @@ export default {
       const positionY = -position.y
       // 2，positionY和主题中值进行对比
       let length = this.themeTopYs.length
-      for(let i = 0; i < length; i++) {
+      for(let i = 0; i < length - 1; i++) {
         
-        if(this.currentIndex !== i && (position >= this.then[i] && positionY < this.themeTopYs[i+1])) {
-          this.currentIndex = i;
-          this.$refs.nav.currentIndex = this.currentIndex
-        }
+        // if(this.currentIndex !== i && (position >= this.then[i] && positionY < this.themeTopYs[i+1])) {
+        //   this.currentIndex = i;
+        //   this.$refs.nav.currentIndex = this.currentIndex
+        // }
 
         // if(this.currentIndex !== i && ((i < length - 1 && positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i + 1]) 
         // || (i === length - 1 && positionY >= this.themeTopYs[i]))){
         //   this.currentIndex = i;
         //   this.$refs.nav.currentIndex = this.currentIndex
         // }
+
+        if(this.currentIndex !== i && (positionY >= this.themeTopYs[i] && positionY < this.themeTopYs[i + 1])){
+          this.currentIndex = i;
+          this.$refs.nav.currentIndex = this.currentIndex
+        }
+
       }
+      // 3.是否显示回到顶部
+      this.isShowBackTop = (-position.y) > 1000
+    },
+    addToCart() {
+      // 1.创建对象并获取购物车需要展示的信息
+      const product = {}
+      product.image = this.topImages[0];
+      product.title = this.goods.title;
+      product.desc = this.goods.desc;
+      product.price = this.goods.realPrice;
+      product.iid = this.iid;
+
+      // 2.添加到Store中，将商品加入到购物车
+      // this.$store.cartList.push(product)
+      // this.$store.commit('addCart', product)
+      this.addCart(product).then(res => {
+        // console.log(res);
+        this.$toast.show(res)
+      })
     }
   }
 }
@@ -178,7 +214,7 @@ export default {
   .content {
     /* position: absolute;
     top: 44px; */
-    height: calc(100% - 44px);
+    height: calc(100% - 44px - 49px);
   }
 
 </style>

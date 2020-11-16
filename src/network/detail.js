@@ -44,6 +44,6 @@ export class GoodsParam {
     // images可能没有值
     this.image = info.image ? info.images[0] : '';
     this.infos = info.set;
-    this.sizes = rule.tables
+    this.sizes = rule.tables;
   }
 }

@@ -11,7 +11,6 @@
 <script>
 import MainTabbar from 'components/content/mainTabbar/MainTabbar'
 
-
 export default {
   name: 'App',
   components: {
@@ -21,9 +20,11 @@ export default {
 }
 </script>
 
-<style>
-@import 'assets/css/base.css';
-main-tabbar {
-  z-index: 9999999;
-}
-</style>
+<style scoped>
+  @import 'assets/css/base.css';
+
+  main-tabbar {
+    z-index: 9999999;
+  }
+</style>>
+
